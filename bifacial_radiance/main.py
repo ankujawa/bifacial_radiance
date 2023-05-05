@@ -3709,7 +3709,8 @@ class AnalysisObj:
         return(linepts)
 
     def _irrPlot(self, octfile, linepts, mytitle=None, plotflag=None,
-                   accuracy='low'):
+                   accuracy='low', ab=10, aa=0, ar=128, ad=2048, _as=60, ac=4096, lr=30, lw=1.0e-4):
+
         """
         (plotdict) = _irrPlot(linepts,title,time,plotflag, accuracy)
         irradiance plotting using rtrace
@@ -3766,16 +3767,19 @@ class AnalysisObj:
         out = {key: [] for key in keys}
         #out = dict.fromkeys(['Wm2','x','y','z','r','g','b','mattype','title'])
         out['title'] = mytitle
+        print('hola mundo')
         print ('Linescan in process: %s' %(mytitle))
         #rtrace ambient values set for 'very accurate':
         #cmd = "rtrace -i -ab 5 -aa .08 -ar 512 -ad 2048 -as 512 -h -oovs "+ octfile
 
         if accuracy == 'low':
             #rtrace optimized for faster scans: (ab2, others 96 is too coarse)
-            cmd = "rtrace -i -ab 2 -aa .1 -ar 256 -ad 2048 -as 256 -h -oovs "+ octfile
+            #cmd = "rtrace -i -aw 0 -ab 10 -aa 0 -ar 128 -ad 4096 -as 512 -ac 8192 -an 100 -at 0.01 -lr 30 -lw 1.0e-6 -h -oovs "+ octfile
+            cmd = "rtrace -i -g 0 -ab "+str(ab)+" -aa "+str(aa)+" -ar "+str(ar)+" -ad "+str(ad)+" -as "+str(_as)+" -ac "+str(ac)+" -an 100 -at 0.01 -lr "+str(lr)+" -lw "+str(lw)+" -h -oovs "+ octfile
+            #cmd = "rtrace -i -ab 10 -aa 0 -ad 2048 -aw 0 -as 60 -lr -9 -lw 1e-3 -an 100 -at 0.01 -h -oovs "+ octfile
         elif accuracy == 'high':
             #rtrace ambient values set for 'very accurate':
-            cmd = "rtrace -i -ab 5 -aa .08 -ar 512 -ad 2048 -as 512 -h -oovs "+ octfile
+            cmd = "rtrace -i -ab 5 -aa .5 -ar 512 -ad 2048 -as 512 -ac 4096 -an 100 -at 0.01 -h -oovs "+ octfile
         else:
             print('_irrPlot accuracy options: "low" or "high"')
             return({})
@@ -4343,7 +4347,7 @@ class AnalysisObj:
         return df_row
 
     def analysis(self, octfile, name, frontscan, backscan,
-                 plotflag=False, accuracy='low', RGB=False):
+                 plotflag=False, accuracy='low', RGB=False, ab=10, aa=0, ar=128, ad=2048, _as=60, ac=4096, lr=30, lw=1.0e-4):
         """
         General analysis function, where linepts are passed in for calling the
         raytrace routine :py:class:`~bifacial_radiance.AnalysisObj._irrPlot` 
@@ -4383,24 +4387,24 @@ class AnalysisObj:
             return None, None
         linepts = self._linePtsMakeDict(frontscan)
         frontDict = self._irrPlot(octfile, linepts, name+'_Front',
-                                    plotflag=plotflag, accuracy=accuracy)
+                                    plotflag=plotflag, accuracy=accuracy, ab =ab, aa=aa, ar=ar, ad=ad, _as=_as, ac=ac, lr=lr, lw=lw)
 
         #bottom view.
-        linepts = self._linePtsMakeDict(backscan)
-        backDict = self._irrPlot(octfile, linepts, name+'_Back',
-                                   plotflag=plotflag, accuracy=accuracy)
+        #linepts = self._linePtsMakeDict(backscan)
+        #backDict = self._irrPlot(octfile, linepts, name+'_Back',
+        #                           plotflag=plotflag, accuracy=accuracy)
         # don't save if _irrPlot returns an empty file.
         if frontDict is not None:
-            if len(frontDict['Wm2']) != len(backDict['Wm2']):
-                self.Wm2Front = np.mean(frontDict['Wm2'])
-                self.Wm2Back = np.mean(backDict['Wm2'])
-                self.backRatio = self.Wm2Back / (self.Wm2Front + .001)
-                self._saveResults(frontDict, reardata=None, savefile='irr_%s.csv'%(name+'_Front'), RGB=RGB)
-                self._saveResults(data=None, reardata=backDict, savefile='irr_%s.csv'%(name+'_Back'), RGB=RGB)
-            else:
-                self._saveResults(frontDict, backDict,'irr_%s.csv'%(name), RGB=RGB)
+            #if len(frontDict['Wm2']) != len(backDict['Wm2']):
+            self.Wm2Front = np.mean(frontDict['Wm2'])
+                #self.Wm2Back = np.mean(backDict['Wm2'])
+                #self.backRatio = self.Wm2Back / (self.Wm2Front + .001)
+            self._saveResults(frontDict, reardata=None, savefile='irr_%s.csv'%(name+'_Front'), RGB=RGB)
+                #self._saveResults(data=None, reardata=backDict, savefile='irr_%s.csv'%(name+'_Back'), RGB=RGB)
+        else:
+            self._saveResults(frontDict, backDict,'irr_%s.csv'%(name), RGB=RGB)
 
-        return frontDict, backDict
+        return frontDict#, backDict
 
 
 def quickExample(testfolder=None):
