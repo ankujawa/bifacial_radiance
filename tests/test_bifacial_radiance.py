@@ -86,8 +86,10 @@ def test_RadianceObj_fixed_tilt_end_to_end():
 def test_Radiance_high_azimuth_modelchains():
     # duplicate next example using modelchain
     # high azimuth .ini file
-
+    import time
+    
     HIGH_AZIMUTH_INI = os.path.join(TESTDIR, "ini_highAzimuth.ini")
+    
 
     (Params)= bifacial_radiance.load.readconfigurationinputfile(inifile=HIGH_AZIMUTH_INI)
     Params[0]['testfolder'] = TESTDIR
@@ -96,6 +98,12 @@ def test_Radiance_high_azimuth_modelchains():
     #assert np.round(np.mean(analysis.backRatio),2) == 0.20  # bifi ratio was == 0.22 in v0.2.2
     assert np.mean(analysis.Wm2Front) == pytest.approx(899, rel = 0.005)  # was 912 in v0.2.3
     assert np.mean(analysis.Wm2Back) == pytest.approx(189, rel = 0.03)  # was 182 in v0.2.2
+
+    # assert that .hdr image files were created in the last 5 minutes
+    mtime_module = os.path.getmtime(os.path.join('images','test-module_XYZ.hdr'))
+    mtime_scene = os.path.getmtime(os.path.join('images','scene_2021-06-17_1300_side.hdr'))
+    assert  time.time() - mtime_module < 300
+    assert  time.time() - mtime_scene < 300
     
 """
 def test_RadianceObj_high_azimuth_angle_end_to_end():
@@ -105,14 +113,14 @@ def test_RadianceObj_high_azimuth_angle_end_to_end():
     demo = bifacial_radiance.RadianceObj(name)  # Create a RadianceObj 'object'
     demo.setGround('white_EPDM') # input albedo number or material name like 'concrete'.  To see options, run this without any input.
   
-    #metdata = demo.readEPW() # read in the EPW weather data from above
-    metdata = demo.readTMY(MET_FILENAME2) # select a TMY file using graphical picker
+    metdata = demo.readWeatherFile(MET_FILENAME2, coerce_year=2001) # select a TMY file using graphical picker
     # Now we either choose a single time point, or use cumulativesky for the entire year. 
     fullYear = False
     if fullYear:
         demo.genCumSky(demo.epwfile) # entire year.  # Don't know how to test this yet in pytest...
     else:
-        demo.gendaylit(metdata=metdata,timeindex=4020)  # Noon, June 17th
+        timeindex = metdata.datetime.index(pd.to_datetime('2001-06-17 12:0:0 -7'))
+        demo.gendaylit(metdata=metdata,timeindex=timeindex)  # Noon, June 17th
     # create a scene using panels in landscape at 10 deg tilt, 1.5m pitch. 0.2 m ground clearance
     sceneDict = {'tilt':10,'pitch':1.5,'height':0.2,'azimuth':30, 'nMods':10, 'nRows':3}  
     module = demo.makeModule(name='test-module',y=0.95,x=1.59, xgap=0)
@@ -174,6 +182,9 @@ def test_RadianceObj_1axis_gendaylit_end_to_end():
     #V 0.2.5 fixed the gcr passed to set1axis. (since gcr was not being passd to set1axis, gcr was default 0.33 default). 
     assert(np.mean(demo.Wm2Front) == pytest.approx(205.0, 0.01) ) # was 214 in v0.2.3  # was 205 in early v0.2.4  
     assert(np.mean(demo.Wm2Back) == pytest.approx(43.0, 0.1) )
+    assert demo.trackerdict['2001-01-01_1100']['scene'].text.__len__() == 132
+    assert demo.trackerdict['2001-01-01_1100']['scene'].text[23:28] == " 2.0 "
+    demo.exportTrackerDict(savefile = 'results\exportedTrackerDict.csv', reindex=True)
 """
 
 def test_1axis_gencumSky():

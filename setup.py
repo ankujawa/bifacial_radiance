@@ -75,7 +75,6 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
@@ -121,6 +120,7 @@ setup(
             # sphinx-gallery is used indirectly for nbsphinx thumbnail galleries; see:
             # https://nbsphinx.readthedocs.io/en/0.6.0/subdir/gallery.html#Creating-Thumbnail-Galleries
             'sphinx-gallery==0.8.1',
+            'tqdm',
         ],
         'all': [
             'ipython',
