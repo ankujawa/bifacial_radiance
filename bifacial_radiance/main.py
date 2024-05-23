@@ -926,6 +926,9 @@ class RadianceObj:
 
         if source.lower() =='tmy3':
             metdata, metadata = self._readTMY(weatherFile, label=label)
+
+        if source.lower() =='cams':
+            metdata, metadata = self._readCAMS(weatherFile)
         
         metdata, metadata = _tz_convert(metdata, metadata, tz_convert_val)
         tzinfo = metdata.index.tzinfo
@@ -1224,6 +1227,27 @@ class RadianceObj:
                                 'albedo':'Alb'
                                 }, inplace=True)    
 
+        return tmydata, metadata
+
+    def _readCAMS(self, epwfile=None):
+        import pickle
+        tmydata = pd.read_csv(epwfile)
+        datetime_col = 'Unnamed: 0'
+        tmydata[datetime_col] = pd.to_datetime(tmydata[datetime_col])
+        tmydata.set_index(datetime_col, inplace=True)
+        tmydata.rename(columns={'dni':'DNI',
+                            'dhi':'DHI',
+                            'temp_air':'DryBulb',
+                            'wind_speed':'Wspd',
+                            'ghi':'GHI',
+                            'albedo':'Alb'
+                            }, inplace=True)
+
+        metadata_filepath = epwfile.replace("tmydata", "metadata")
+        metadata_filepath = metadata_filepath.replace("csv", "pkl")
+
+        with open(metadata_filepath, 'rb') as f:
+            metadata = pickle.load(f)
         return tmydata, metadata
 
 
@@ -3638,7 +3662,7 @@ class AnalysisObj:
         return(linepts)
 
     def _irrPlot(self, octfile, linepts, mytitle=None, plotflag=None,
-                   accuracy='low'):
+                   accuracy='low', cores=1):
         """
         (plotdict) = _irrPlot(linepts,title,time,plotflag, accuracy)
         irradiance plotting using rtrace
@@ -3701,10 +3725,10 @@ class AnalysisObj:
 
         if accuracy == 'low':
             #rtrace optimized for faster scans: (ab2, others 96 is too coarse)
-            cmd = "rtrace -i -ab 2 -aa .1 -ar 256 -ad 2048 -as 256 -h -oovs "+ octfile
+            cmd = "rtrace -i -ab 2 -aa .1 -ar 256 -ad 2048 -as 256 -h -oovs -n "+ str(cores) + " "+ octfile
         elif accuracy == 'high':
             #rtrace ambient values set for 'very accurate':
-            cmd = "rtrace -i -ab 5 -aa .08 -ar 512 -ad 2048 -as 512 -h -oovs "+ octfile
+            cmd = "rtrace -i -ab 5 -aa .08 -ar 512 -ad 2048 -as 512 -h -oovs -n "+ str(cores) + " "+ octfile
         else:
             print('_irrPlot accuracy options: "low" or "high"')
             return({})
@@ -4285,7 +4309,7 @@ class AnalysisObj:
         return df_row
 
     def analysis(self, octfile, name, frontscan, backscan,
-                 plotflag=False, accuracy='low', RGB=False):
+                 plotflag=False, accuracy='low', RGB=False, cores=1):
         """
         General analysis function, where linepts are passed in for calling the
         raytrace routine :py:class:`~bifacial_radiance.AnalysisObj._irrPlot` 
@@ -4325,14 +4349,15 @@ class AnalysisObj:
             return None, None
         linepts = self._linePtsMakeDict(frontscan)
         frontDict = self._irrPlot(octfile, linepts, name+'_Front',
-                                    plotflag=plotflag, accuracy=accuracy)
+                                    plotflag=plotflag, accuracy=accuracy, cores=cores)
 
         #bottom view.
         linepts = self._linePtsMakeDict(backscan)
         backDict = self._irrPlot(octfile, linepts, name+'_Back',
-                                   plotflag=plotflag, accuracy=accuracy)
+                                   plotflag=plotflag, accuracy=accuracy, cores=cores)
         # don't save if _irrPlot returns an empty file.
         if frontDict is not None:
+            print('hola mundo')
             if len(frontDict['Wm2']) != len(backDict['Wm2']):
                 self.Wm2Front = np.mean(frontDict['Wm2'])
                 self.Wm2Back = np.mean(backDict['Wm2'])
