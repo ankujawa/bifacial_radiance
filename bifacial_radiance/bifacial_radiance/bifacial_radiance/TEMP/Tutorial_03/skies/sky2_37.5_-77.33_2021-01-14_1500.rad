@@ -1,0 +1,36 @@
+# start of sky definition for daylighting studies
+# location name: RICHMOND LAT: 37.5 LON: -77.33 Elev: 50.0
+# Sun position calculated w. PVLib
+!gendaylit -ang 23.69002115386156 33.542689434206466 -W 505 103 -g 0.2133 -O 1 
+skyfunc glow sky_mat
+0
+0
+4 1 1 1 0
+
+sky_mat source sky
+0
+0
+4 0 0 1 180
+
+skyfunc glow ground_glow
+0
+0
+4 1.393219345571244 0.8983862676614575 0.7830853563038372 0
+
+ground_glow source ground
+0
+0
+4 0 0 -1 180
+
+void plastic litesoil
+0
+0
+5 0.290 0.187 0.163 0 0
+
+litesoil ring groundplane
+0
+0
+8
+0 0 -.01
+0 0 1
+0 100

@@ -448,6 +448,26 @@ class RadianceObj:
 
     #def setHPC(self, hpc=True):
     #    self.hpc = hpc
+
+    def addCustomSkyFile(self, sky_file_path):
+        """
+        Add a custom Radiance .rad file to the RadianceObj.
+        
+        Parameters
+        ----------
+        sky_file_path: string
+            Path to the custom .rad sky file to be added.
+        
+        Returns
+        -------
+        None
+        """
+        print('dolpho')
+        if os.path.exists(sky_file_path):
+            self.skyfiles.append(sky_file_path)
+            print(f'Added custom radiance file: {sky_file_path}')
+        else:
+            print(f'File does not exist: {sky_file_path}')
         
     def addMaterial(self, material, Rrefl, Grefl, Brefl, materialtype='plastic', 
                     specularity=0, roughness=0, material_file=None, comment=None, rewrite=True):
